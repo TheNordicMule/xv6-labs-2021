@@ -97,6 +97,18 @@ allocpid() {
   return pid;
 }
 
+uint64 calc_non_free_proc() {
+  struct proc *p;
+
+  int non_free_proc = 0;
+  for(p = proc; p < &proc[NPROC]; p++) {
+    if(p->state != UNUSED) {
+      non_free_proc++;
+    }
+  }
+  return non_free_proc;
+}
+
 // Look in the process table for an UNUSED proc.
 // If found, initialize state required to run in the kernel,
 // and return with p->lock held.
