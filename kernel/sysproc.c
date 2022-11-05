@@ -110,7 +110,7 @@ uint64 sys_sysinfo(void) {
   struct proc *p = myproc();
   struct sysinfo info;
   uint64 addr;
-  info.freemem = 0;
+  info.freemem = calc_free_mem();
   info.nproc = calc_non_free_proc();
   if (argaddr(0, &addr) < 0) {
     return -1;
