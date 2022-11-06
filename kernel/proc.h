@@ -105,4 +105,7 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+
+  // need to have a reference to speed up some sys call
+  struct usyscall *usyscall;
 };
