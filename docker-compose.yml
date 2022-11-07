@@ -1,0 +1,8 @@
+version: "3"
+services:
+  xv6:
+    image: xv6
+    tty: true  
+    volumes:
+      - .:/Users/mingshiwang/xv6-labs-2021
+
