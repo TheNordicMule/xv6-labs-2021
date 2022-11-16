@@ -81,6 +81,25 @@ int
 sys_pgaccess(void)
 {
   // lab pgtbl: your code here.
+  uint64 user_pt; 
+  int num_pages = 0;
+  uint64 bitmask = 0;
+  // retrieve virtual address pointer
+  if(argaddr(0, &user_pt) < 0) {
+    return -1;
+  }
+  // retrieve number of pages
+  if (argint(1, &num_pages) < 0) {
+    return -1;
+  }
+
+  // retrieve bitmask to store result
+  if (argaddr(2, &bitmask) < 0) {
+    return -1;
+  }
+  printf("%p is user_pt from kernel\n", user_pt);
+  printf("%d is num_pages from kernel\n", num_pages);
+  printf("%p is bitmask address from kernel\n", bitmask);
   return 0;
 }
 #endif
