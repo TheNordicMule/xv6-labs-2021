@@ -83,7 +83,8 @@ sys_pgaccess(void)
   // lab pgtbl: your code here.
   uint64 user_pt; 
   int num_pages = 0;
-  uint64 bitmask = 0;
+  int bitmask = 0;
+  uint64 bitmask_address = 0; 
   // retrieve virtual address pointer
   if(argaddr(0, &user_pt) < 0) {
     return -1;
@@ -94,12 +95,19 @@ sys_pgaccess(void)
   }
 
   // retrieve bitmask to store result
-  if (argaddr(2, &bitmask) < 0) {
+  if (argaddr(2, &bitmask_address) < 0) {
     return -1;
   }
-  printf("%p is user_pt from kernel\n", user_pt);
-  printf("%d is num_pages from kernel\n", num_pages);
-  printf("%p is bitmask address from kernel\n", bitmask);
+  // first page is the first page in page table
+  for (int i = 0; i < num_pages; i++) {
+    pte_t *page_pointer = walk(myproc()->pagetable, user_pt, 0);
+    if (*page_pointer & PTE_A ) {
+      *page_pointer &= ~PTE_A;
+      bitmask |= 1 << i;
+    }
+    user_pt += PGSIZE;
+  }
+  copyout(myproc()->pagetable, bitmask_address, (char*)&bitmask, sizeof(bitmask));
   return 0;
 }
 #endif
