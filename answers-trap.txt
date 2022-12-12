@@ -1,4 +1,0 @@
-1. a2 register holds the number 13
-2. 
-
-

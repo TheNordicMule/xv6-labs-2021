@@ -1,0 +1,5 @@
+1. a2 register holds the number 13
+2. 0xe is for f and 0x0 is for g
+3. 0x630 is the address for printf
+
+

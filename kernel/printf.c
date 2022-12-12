@@ -132,3 +132,19 @@ printfinit(void)
   initlock(&pr.lock, "pr");
   pr.locking = 1;
 }
+
+void backtrace() {
+  uint64 fp = r_fp();
+  struct proc  *process = myproc();
+  while (1) {
+    uint64 return_address = *((uint64*)(fp - 8));
+    fp = *((uint64*)(fp - 16));
+    uint64 top_page = PGROUNDUP(fp);
+    if (top_page != process -> kstack + PGSIZE) {
+      break;
+    }
+    /* printf("%p is next frame address\n", fp); */
+    printf("%p\n", return_address);
+    /* printf("%p is is top_page\n", top_page); */
+  }
+}
