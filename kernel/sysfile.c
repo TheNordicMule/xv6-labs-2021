@@ -503,5 +503,7 @@ sys_sigalarm(void)
 uint64
 sys_sigreturn(void)
 {
+  struct proc* p = myproc();
+  memmove(p->trapframe,p->alarmframe,PGSIZE);
   return 0;
 }

@@ -127,6 +127,8 @@ found:
     return 0;
   }
 
+  p -> alarmframe = (struct trapframe *)kalloc();
+
   // An empty user page table.
   p->pagetable = proc_pagetable(p);
   if(p->pagetable == 0){
