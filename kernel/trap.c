@@ -69,7 +69,8 @@ usertrap(void)
     // ok
     if (which_dev == 2) {
       struct proc *p = myproc();
-      if (p -> ticks++ == p ->interval && p-> interval != 0) {
+      if (p -> ticks++ == p ->interval && p-> interval != 0 && p->isHandling == 0) {
+        p->isHandling = 1;
         memmove(p->alarmframe,p->trapframe,PGSIZE);
         p-> ticks = 0;
         p -> trapframe ->epc = p->handler;
