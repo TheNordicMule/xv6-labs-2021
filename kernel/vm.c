@@ -5,6 +5,8 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "spinlock.h"
+#include "proc.h"
 
 /*
  * the kernel's page table.
@@ -310,8 +312,14 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
     if((*pte & PTE_V) == 0)
       panic("uvmcopy: page not present");
     pa = PTE2PA(*pte);
-    flags = PTE_FLAGS(*pte) & ~PTE_W;
-    *pte &= ~PTE_W;
+    flags = PTE_FLAGS(*pte);
+    if (*pte & PTE_W || *pte & PTE_C) {
+      flags &= ~PTE_W;
+      *pte &= ~PTE_W;
+      flags = flags | PTE_C;
+      *pte |= PTE_C;
+      incref(pa);
+    }
     /* if((mem = kalloc()) == 0) */
     /*   goto err; */
     /* memmove(mem, (char*)pa, PGSIZE); */
@@ -349,6 +357,34 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 
   while(len > 0){
     va0 = PGROUNDDOWN(dstva);
+
+    if (va0 >= MAXVA) {
+      return -1;
+    }
+
+    pte_t* page_entry = walk(pagetable, va0, 0);
+
+    if (page_entry == 0 || (*page_entry & PTE_V) == 0 || (*page_entry & PTE_U) == 0) 
+      return -1;
+
+    if (*page_entry & PTE_C) {
+      struct proc *p = myproc();
+      uint64 flags = PTE_FLAGS(*page_entry);
+      char *mem;
+      mem = kalloc();
+      if(mem == 0) {
+        p->killed = 1;
+        exit(-1);
+      }
+      memmove(mem,(void*)PTE2PA(*page_entry),PGSIZE);
+      flags = (flags | PTE_W) & ~PTE_C;
+      uvmunmap(pagetable, PGROUNDDOWN(va0),1,1);
+      if (mappages(pagetable, PGROUNDDOWN(va0), PGSIZE, (uint64)mem, flags) != 0) {
+        p->killed = 1;
+        panic("There is a problem when doing mappages when handling page fault\n");
+      } 
+    }
+
     pa0 = walkaddr(pagetable, va0);
     if(pa0 == 0)
       return -1;

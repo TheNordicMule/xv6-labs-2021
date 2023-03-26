@@ -68,8 +68,42 @@ usertrap(void)
   } else if((which_dev = devintr()) != 0){
     // ok
   } else if (r_scause() == 15) {
-    /* uint64 fault_addr = r_stval(); */
-    /* printf("%p is the fault addr", fault_addr); */
+    uint64 fault_addr = r_stval();
+    pagetable_t pagetable = p->pagetable;
+    if (fault_addr >= MAXVA) {
+      p->killed = 1;
+      exit(-1);
+    }
+
+    pte_t* page_entry = walk(pagetable, fault_addr,0);
+    if (page_entry ==0) {
+      p->killed = 1;
+    }
+
+    if ((*page_entry & PTE_U) == 0|| (*page_entry & PTE_V) == 0) {
+      p->killed = 1;
+    }
+
+    uint flags;
+    
+    flags = PTE_FLAGS(*page_entry);
+    
+    if (*page_entry & PTE_C) {
+      char *mem;
+      mem = kalloc();
+      if(mem == 0) {
+        p->killed = 1;
+        exit(-1);
+      }
+      memmove(mem,(void*)PTE2PA(*page_entry),PGSIZE);
+      flags = (flags | PTE_W) & ~PTE_C;
+      uvmunmap(pagetable, PGROUNDDOWN(fault_addr),1,1);
+      if (mappages(pagetable, PGROUNDDOWN(fault_addr), PGSIZE, (uint64)mem, flags) != 0) {
+        panic("There is a problem when doing mappages when handling page fault\n");
+        p->killed = 1;
+        exit(-1);
+      } 
+    }
   } else {
     printf("usertrap(): unexpected scause %p pid=%d\n", r_scause(), p->pid);
     printf("            sepc=%p stval=%p\n", r_sepc(), r_stval());
